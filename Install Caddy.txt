@@ -1,0 +1,60 @@
+sudo curl https://getcaddy.com | bash -s personal
+
+sudo useradd -r -d /opt/caddy caddy
+
+cd /opt
+
+sudo mkdir caddy
+
+sudo chown caddy:caddy caddy/
+
+sudo su - caddy
+
+cd /opt/caddy
+
+vim caddyfile
+
+============================================================
+
+.homelab.ericwhitehead.org:443 {
+        proxy / localhost:5076 {
+		insecure_skip_verify
+                websocket
+                transparent
+        }
+        tls /opt/caddy/.crt /opt/caddy/.key
+}
+
+============================================================
+
+exit
+
+sudo vim /etc/systemd/system/caddy.service
+
+============================================================
+
+[Unit]
+Description=Caddy webserver
+Documentation=https://caddyserver.com/
+After=network.target
+
+[Service]
+User=caddy
+#Group=some_group
+WorkingDirectory=/opt/caddy
+LimitNOFILE=4096
+#PIDFile=/var/run/caddy/caddy.pid
+ExecStart=/usr/local/bin/caddy -conf="/opt/caddy/caddyfile"
+Restart=on-failure
+StartLimitInterval=600
+
+[Install]
+WantedBy=multi-user.target
+
+============================================================
+
+sudo systemctl daemon-reload
+
+sudo systemctl enable caddy.service
+
+sudo systemctl start caddy.service
